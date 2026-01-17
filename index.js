@@ -1,9 +1,5 @@
 const { Client, LocalAuth } = require('whatsapp-web.js');
-const puppeteer = require('puppeteer-extra');
-const StealthPlugin = require('puppeteer-extra-plugin-stealth');
-
-// Usar plugin stealth para melhor compatibilidade
-puppeteer.use(StealthPlugin());
+const puppeteer = require('puppeteer');
 
 // Inicializando bot WhatsApp com Puppeteer para Render
 (async () => {

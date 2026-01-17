@@ -8,6 +8,7 @@ const os = require('os');
 
 module.exports = {
   // Diretório onde o Puppeteer armazena o navegador
+  // Usa sempre o home directory do usuário
   cacheDirectory: path.join(os.homedir(), '.cache', 'puppeteer'),
   
   // Log detalhado para debug
@@ -16,6 +17,7 @@ module.exports = {
   // Timeout maior para download em produção
   timeout: 120000,
   
-  // Tenta usar executável do sistema se disponível
+  // Não pula o download
   skipDownload: false
 };
+

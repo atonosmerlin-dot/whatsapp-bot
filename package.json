@@ -9,8 +9,6 @@
   },
   "dependencies": {
     "puppeteer": "^23.0.0",
-    "puppeteer-extra": "^3.3.6",
-    "puppeteer-extra-plugin-stealth": "^2.11.2",
     "whatsapp-web.js": "^1.20.0"
   },
   "engines": {

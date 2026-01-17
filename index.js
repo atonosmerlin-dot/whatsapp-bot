@@ -10,25 +10,55 @@ app.use(express.json());
 let client = null;
 let isClientReady = false;
 
-// Função para encontrar o executável do Chrome
+// Função para encontrar o executável do Chrome dinamicamente
 function findChromePath() {
-  const possiblePaths = [
-    '/opt/render/.cache/puppeteer/chrome/linux-131.0.6778.204/chrome-linux64/chrome',
-    path.join(process.env.HOME || '/root', '.cache/puppeteer/chrome/linux-131.0.6778.204/chrome-linux64/chrome'),
-    '/usr/bin/chromium-browser',
-    '/usr/bin/chromium',
-    '/snap/bin/chromium',
-    'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe'
-  ];
+  const fs = require('fs');
+  const path = require('path');
+  
+  // Caminhos de cache onde o Puppeteer baixa o Chrome
+  const cacheDirs = [
+    '/opt/render/.cache/puppeteer',
+    path.join(process.env.HOME || '/root', '.cache/puppeteer'),
+    path.join(process.env.PUPPETEER_CACHE_DIR || '', 'puppeteer')
+  ].filter(Boolean);
 
-  for (const chromePath of possiblePaths) {
-    if (fs.existsSync(chromePath)) {
-      console.log(`[BOT] ✓ Chrome encontrado em: ${chromePath}`);
-      return chromePath;
+  for (const cacheDir of cacheDirs) {
+    if (!fs.existsSync(cacheDir)) continue;
+
+    try {
+      // Procurar recursivamente por um executável do Chrome
+      function searchForChrome(dir, depth = 0) {
+        if (depth > 5) return null; // Limitar profundidade
+
+        const files = fs.readdirSync(dir);
+        
+        for (const file of files) {
+          const filePath = path.join(dir, file);
+          const stat = fs.statSync(filePath);
+
+          // Se encontrou arquivo chamado 'chrome' e tem permissão de execução
+          if (file === 'chrome' && stat.isFile()) {
+            console.log(`[BOT] ✓ Chrome encontrado em: ${filePath}`);
+            return filePath;
+          }
+
+          // Continuar buscando em subdiretórios
+          if (stat.isDirectory() && depth < 4) {
+            const found = searchForChrome(filePath, depth + 1);
+            if (found) return found;
+          }
+        }
+        return null;
+      }
+
+      const chromeExe = searchForChrome(cacheDir);
+      if (chromeExe) return chromeExe;
+    } catch (error) {
+      // Continuar se erro em um cache dir
     }
   }
 
-  console.log('[BOT] ⚠️ Chrome não encontrado em caminhos conhecidos');
+  console.log('[BOT] ⚠️ Chrome não encontrado em diretórios de cache');
   return null;
 }
 
@@ -60,9 +90,12 @@ async function initializeBot() {
       ]
     };
 
+    // Só adiciona executablePath se encontrou o Chrome
     if (chromePath) {
       launchArgs.executablePath = chromePath;
-      console.log('[BOT] ℹ️ Usando Chrome encontrado');
+      console.log('[BOT] ℹ️ Usando Chrome encontrado no cache');
+    } else {
+      console.log('[BOT] ℹ️ Tentando usar Chrome padrão do Puppeteer');
     }
 
     const browser = await puppeteer.launch(launchArgs);

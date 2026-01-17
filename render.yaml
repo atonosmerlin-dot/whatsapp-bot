@@ -11,8 +11,8 @@ services:
         value: production
       - key: PUPPETEER_SKIP_CHROMIUM_DOWNLOAD
         value: "false"
-      - key: PUPPETEER_SKIP_DOWNLOAD
-        value: "false"
+      - key: PUPPETEER_CACHE_DIR
+        value: /root/.cache/puppeteer
     disk:
       name: chrome-cache
       mountPath: /root/.cache/puppeteer

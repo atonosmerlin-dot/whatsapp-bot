@@ -4,10 +4,9 @@ const puppeteer = require('puppeteer');
 // Inicializando Puppeteer para Render
 (async () => {
   const browser = await puppeteer.launch({
-  headless: true,
-  executablePath: '/usr/bin/chromium-browser', // Chromium do Render
-  args: ['--no-sandbox', '--disable-setuid-sandbox'] // obrigatório para servidores
-});
+    headless: true,
+    args: ['--no-sandbox', '--disable-setuid-sandbox'] // obrigatório para servidores
+  });
 
   console.log('[BOT] Puppeteer iniciado!');
 
@@ -36,5 +35,4 @@ const puppeteer = require('puppeteer');
   });
 
   await client.initialize();
-
 })();

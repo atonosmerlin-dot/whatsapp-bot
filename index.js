@@ -1,19 +1,36 @@
 const { Client, LocalAuth } = require('whatsapp-web.js');
-const puppeteer = require('puppeteer');
+const puppeteer = require('puppeteer-extra');
+const StealthPlugin = require('puppeteer-extra-plugin-stealth');
+
+// Usar plugin stealth para melhor compatibilidade
+puppeteer.use(StealthPlugin());
 
 // Inicializando bot WhatsApp com Puppeteer para Render
 (async () => {
   try {
     // Configuração do Puppeteer para Render.com
-    const browser = await puppeteer.launch({
+    console.log('[BOT] 🚀 Iniciando Puppeteer com configurações para Render...');
+    
+    const launchArgs = {
       headless: 'new',
       args: [
         '--no-sandbox',
         '--disable-setuid-sandbox',
         '--disable-gpu',
-        '--disable-dev-shm-usage'
+        '--disable-dev-shm-usage',
+        '--disable-web-resources'
       ]
-    });
+    };
+
+    // Se estamos em Render, não especificamos executablePath
+    // Deixamos o Puppeteer encontrar automaticamente
+    if (!process.env.RENDER) {
+      console.log('[BOT] ℹ️ Ambiente local detectado');
+    } else {
+      console.log('[BOT] ℹ️ Render detectado - usando Chromium do cache');
+    }
+
+    const browser = await puppeteer.launch(launchArgs);
 
     console.log('[BOT] ✓ Puppeteer iniciado com sucesso!');
 

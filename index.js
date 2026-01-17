@@ -1,6 +1,5 @@
 const { Client, LocalAuth } = require('whatsapp-web.js');
 const puppeteer = require('puppeteer');
-const path = require('path');
 
 // Inicializando bot WhatsApp com Puppeteer para Render
 (async () => {

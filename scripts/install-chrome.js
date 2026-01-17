@@ -15,43 +15,49 @@ async function installChrome() {
   try {
     console.log('[INSTALL] 📦 Iniciando download do Chromium para Render...');
 
-    // Definir cache para local persistente
-    const cacheDir = path.join(os.homedir(), '.cache', 'puppeteer');
-    
-    // Garantir que o diretório existe
-    if (!fs.existsSync(cacheDir)) {
-      fs.mkdirSync(cacheDir, { recursive: true });
-      console.log(`[INSTALL] 📁 Diretório criado: ${cacheDir}`);
-    }
-
     // Usar a CLI do Puppeteer para instalar Chrome
-    // Define PUPPETEER_CACHE_DIR antes de executar
-    const env = { ...process.env, PUPPETEER_CACHE_DIR: cacheDir };
-    
+    // Sem definir cache dir - deixa o Puppeteer usar seu padrão
     try {
       execSync('npx puppeteer browsers install chrome', {
         stdio: 'inherit',
-        cwd: path.join(__dirname, '..'),
-        env: env
+        cwd: path.join(__dirname, '..')
       });
     } catch (e) {
       console.warn('[INSTALL] ⚠️ npx puppeteer browsers install falhou, tentando npm');
       execSync('npm exec puppeteer browsers install chrome', {
         stdio: 'inherit',
-        cwd: path.join(__dirname, '..'),
-        env: env
+        cwd: path.join(__dirname, '..')
       });
     }
 
     console.log('[INSTALL] ✓ Chromium baixado com sucesso!');
-    console.log(`[INSTALL] 📍 Cache: ${cacheDir}`);
 
-    // Verificar se o Chrome foi instalado
-    const chromeDir = fs.readdirSync(cacheDir).filter(f => f.includes('chrome'));
-    if (chromeDir.length > 0) {
-      console.log('[INSTALL] ✓ Chrome encontrado no cache');
+    // Tentar encontrar onde foi instalado
+    const possibleCaches = [
+      path.join(process.env.HOME || '/root', '.cache/puppeteer'),
+      '/opt/render/.cache/puppeteer',
+      path.join(__dirname, '..', '.cache', 'puppeteer')
+    ];
+
+    for (const cacheDir of possibleCaches) {
+      if (fs.existsSync(cacheDir)) {
+        console.log(`[INSTALL] 📍 Cache encontrado: ${cacheDir}`);
+        
+        // Listar o que foi instalado
+        try {
+          const contents = fs.readdirSync(cacheDir, { recursive: true });
+          const chromeFiles = contents.filter(f => f.includes('chrome'));
+          if (chromeFiles.length > 0) {
+            console.log(`[INSTALL] ✓ Chrome encontrado (${chromeFiles.length} arquivos)`);
+            process.exit(0);
+          }
+        } catch (e) {
+          // Continue
+        }
+      }
     }
 
+    console.log('[INSTALL] ⚠️ Não foi possível verificar instalação, mas continuando...');
     process.exit(0);
   } catch (error) {
     console.error('[INSTALL] ❌ Erro ao instalar Chromium:', error.message);
@@ -61,5 +67,6 @@ async function installChrome() {
 }
 
 installChrome();
+
 
 

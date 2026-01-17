@@ -1,11 +1,41 @@
 const { Client, LocalAuth } = require('whatsapp-web.js');
 const puppeteer = require('puppeteer');
+const fs = require('fs');
+const path = require('path');
+
+// Função para encontrar o executável do Chrome
+function findChromePath() {
+  const possiblePaths = [
+    // Render paths
+    '/opt/render/.cache/puppeteer/chrome/linux-131.0.6778.204/chrome-linux64/chrome',
+    path.join(process.env.HOME || '/root', '.cache/puppeteer/chrome/linux-131.0.6778.204/chrome-linux64/chrome'),
+    path.join(process.env.HOME || '/root', '.cache/puppeteer/chrome/linux-131.0.6778.204/chrome-linux64/chrome'),
+    // Alternativas
+    '/usr/bin/chromium-browser',
+    '/usr/bin/chromium',
+    '/snap/bin/chromium',
+    // Local development
+    'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe'
+  ];
+
+  for (const chromePath of possiblePaths) {
+    if (fs.existsSync(chromePath)) {
+      console.log(`[BOT] ✓ Chrome encontrado em: ${chromePath}`);
+      return chromePath;
+    }
+  }
+
+  console.log('[BOT] ⚠️ Chrome não encontrado em caminhos conhecidos');
+  return null;
+}
 
 // Inicializando bot WhatsApp com Puppeteer para Render
 (async () => {
   try {
     // Configuração do Puppeteer para Render.com
     console.log('[BOT] 🚀 Iniciando Puppeteer com configurações para Render...');
+    
+    const chromePath = findChromePath();
     
     const launchArgs = {
       headless: 'new',
@@ -18,12 +48,18 @@ const puppeteer = require('puppeteer');
       ]
     };
 
-    // Se estamos em Render, não especificamos executablePath
-    // Deixamos o Puppeteer encontrar automaticamente
-    if (!process.env.RENDER) {
-      console.log('[BOT] ℹ️ Ambiente local detectado');
+    // Adicionar executablePath se encontrado
+    if (chromePath) {
+      launchArgs.executablePath = chromePath;
+      console.log('[BOT] ℹ️ Usando Chrome encontrado');
     } else {
-      console.log('[BOT] ℹ️ Render detectado - usando Chromium do cache');
+      console.log('[BOT] ℹ️ Tentando usar Chrome padrão do Puppeteer');
+    }
+
+    if (process.env.RENDER) {
+      console.log('[BOT] ℹ️ Render detectado');
+    } else {
+      console.log('[BOT] ℹ️ Ambiente local');
     }
 
     const browser = await puppeteer.launch(launchArgs);

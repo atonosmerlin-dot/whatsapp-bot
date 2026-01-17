@@ -3,9 +3,10 @@
 /**
  * Script para baixar e instalar Chrome/Chromium durante o build no Render
  * Executado via postinstall no package.json
+ * Compatível com Puppeteer 23.x
  */
 
-const puppeteer = require('puppeteer');
+const { execSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 
@@ -13,12 +14,14 @@ async function installChrome() {
   try {
     console.log('[INSTALL] 📦 Iniciando download do Chromium para Render...');
 
-    // Tentar usar puppeteer para baixar o navegador
-    const browserFetcher = puppeteer.createBrowserFetcher();
-    const revisionInfo = await browserFetcher.download(puppeteer.PUPPETEER_REVISIONS.chromium);
+    // Usar a CLI do Puppeteer para instalar Chrome
+    // Esta é a forma correta para Puppeteer 23.x
+    execSync('npx puppeteer install chrome', {
+      stdio: 'inherit',
+      cwd: path.join(__dirname, '..')
+    });
 
     console.log('[INSTALL] ✓ Chromium baixado com sucesso!');
-    console.log(`[INSTALL] 📍 Local: ${revisionInfo.executablePath}`);
 
     // Criar arquivo de cache para marcar sucesso
     const cacheDir = path.join(__dirname, '..', '.install-cache');
@@ -32,10 +35,11 @@ async function installChrome() {
   } catch (error) {
     console.error('[INSTALL] ❌ Erro ao instalar Chromium:', error.message);
     
-    // Não falhar totalmente - o Render pode tentar usar sistema libraries
+    // Não falhar totalmente - permite que o build continue
     console.warn('[INSTALL] ⚠️ Tentando continuar mesmo com erro...');
-    process.exit(0); // Exit com sucesso mesmo com erro para não quebrar o build
+    process.exit(0);
   }
 }
 
 installChrome();
+

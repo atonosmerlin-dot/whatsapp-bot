@@ -1,39 +1,39 @@
-const express = require('express');
 const { Client, LocalAuth } = require('whatsapp-web.js');
+const puppeteer = require('puppeteer');
 
-const app = express();
-app.use(express.json());
+// Inicializando Puppeteer para Render
+(async () => {
+  const browser = await puppeteer.launch({
+    headless: true,
+    args: ['--no-sandbox', '--disable-setuid-sandbox']
+  });
 
-const client = new Client({
-  authStrategy: new LocalAuth()
-});
+  console.log('[BOT] Puppeteer iniciado!');
 
-client.on('qr', qr => {
-  console.log('ESCANEIE O QR CODE:');
-  require('qrcode-terminal').generate(qr, { small: true });
-});
+  // Inicializando cliente WhatsApp
+  const client = new Client({
+    puppeteer: { browser }, // usa o browser que acabamos de criar
+    authStrategy: new LocalAuth({ clientId: 'bot-whatsapp' }) // salva sessão para não precisar QR toda vez
+  });
 
-client.on('ready', () => {
-  console.log('WhatsApp conectado!');
-});
+  client.on('qr', (qr) => {
+    console.log('[BOT] Escaneie este QR Code no WhatsApp Web:');
+    console.log(qr);
+  });
 
-client.initialize();
+  client.on('ready', () => {
+    console.log('[BOT] WhatsApp conectado!');
+  });
 
-app.post('/notify', async (req, res) => {
-  const { phone, message } = req.body;
+  client.on('message', (msg) => {
+    console.log(`[BOT] Mensagem recebida de ${msg.from}: ${msg.body}`);
 
-  try {
-    await client.sendMessage(`${phone}@c.us`, message);
-    res.json({ ok: true });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
+    // Resposta automática exemplo
+    if (msg.body.toLowerCase() === 'ping') {
+      msg.reply('Pong!');
+    }
+  });
 
-app.get('/', (req, res) => {
-  res.send('Bot WhatsApp ativo');
-});
+  await client.initialize();
 
-app.listen(process.env.PORT || 3000, () => {
-  console.log('Servidor rodando');
-});
+})();
